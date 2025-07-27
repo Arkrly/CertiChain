@@ -1,57 +1,41 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import CertificateForm from './components/CertificateForm';
 import CertificateGallery from './components/CertificateGallery';
+import CertificateChecker from './components/CertificateChecker';
 import WalletConnection from './components/WalletConnection';
 import DarkModeToggle from './components/DarkModeToggle';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { convertCertificateToNFT, getCertificateNFTs } from './utils/certificateUtils';
-import { connectToStacks } from './utils/stacksUtils';
+import { connectToStacks, getCertificateDetails, getCertificateOwner, getCertificateExtraData } from './utils/stacksUtils';
+import type { StacksProvider } from './utils/stacksUtils';
+import type { Certificate, CertificateFormData, RawCertificateData, CertificateExtraData } from './types/certificate';
+import { clearWalletSession, setupSessionCleanup } from './utils/sessionUtils';
 import './App.css';
 
-interface Certificate {
-  tokenId: number;
-  name: string;
-  issuer: string;
-  recipient: string;
-  certificateId: string;
-  courseName: string;
-  issueDate: string;
-  expiryDate?: string;
-  skills: string[];
-  grade?: string;
-  institution?: string;
-  instructor?: string;
-  imageUri?: string;
-  description?: string;
-  isVerified: boolean;
-  createdAt: number;
-}
-
-interface CertificateFormData {
-  name: string;
-  issuer: string;
-  recipient: string;
-  certificateId: string;
-  courseName: string;
-  issueDate: string;
-  expiryDate: string;
-  skills: string[];
-  grade: string;
-  institution: string;
-  instructor: string;
-  imageUri: string;
-  description: string;
-}
-
 const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<'create' | 'gallery'>('create');
+  const [currentTab, setCurrentTab] = useState<'create' | 'gallery' | 'checker'>('create');
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
-  const [stacksProvider, setStacksProvider] = useState<unknown>(null);
+  const [stacksProvider, setStacksProvider] = useState<StacksProvider | null>(null);
+
+  // Clear wallet session on app initialization to ensure fresh login
+  useEffect(() => {
+    // Clear any existing session on app start
+    clearWalletSession();
+    
+    // Setup session cleanup event listeners
+    const cleanup = setupSessionCleanup();
+
+    // Cleanup on component unmount
+    return () => {
+      cleanup();
+      clearWalletSession();
+    };
+  }, []);
 
   // Define initializeStacks with useCallback
   const initializeStacks = useCallback(async () => {
@@ -105,6 +89,8 @@ const App: React.FC = () => {
     if (!connected) {
       setCertificates([]);
       setStacksProvider(null);
+      // Ensure session is cleared on disconnect using utility function
+      clearWalletSession();
     }
   };
 
@@ -141,10 +127,22 @@ const App: React.FC = () => {
         
         // Add new certificate to the list
         const newCertificate: Certificate = {
-          tokenId: result.tokenId,
-          ...formData,
-          skills: formData.skills.filter(skill => skill.trim() !== ''),
+          tokenId: certificates.length + 1,
+          name: formData.name,
+          issuer: formData.issuer,
+          recipient: formData.recipient,
+          certificateId: formData.certificateId,
+          courseName: formData.courseName,
+          issueDate: formData.issueDate,
+          expiryDate: formData.expiryDate || undefined,
+          skills: formData.skills,
+          grade: formData.grade || undefined,
+          institution: formData.institution || undefined,
+          instructor: formData.instructor || undefined,
+          imageUri: formData.imageUri || undefined,
+          description: formData.description || undefined,
           isVerified: false,
+          metadataFrozen: false,
           createdAt: Date.now()
         };
         
@@ -182,7 +180,7 @@ const App: React.FC = () => {
         setCertificates(prev => 
           prev.map(cert => 
             cert.tokenId === tokenId 
-              ? { ...cert, isVerified: true }
+              ? { ...cert, isVerified: true, metadataFrozen: true }
               : cert
           )
         );
@@ -195,6 +193,74 @@ const App: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'Failed to verify certificate';
       setError(errorMessage);
       setIsLoading(false);
+    }
+  };
+
+  // Handle certificate checking by token ID
+  const handleCheckCertificate = async (tokenId: number): Promise<Certificate | null> => {
+    if (!stacksProvider) {
+      throw new Error('Stacks connection not available');
+    }
+
+    try {
+      // Get basic certificate data
+      const certResult = await getCertificateDetails(stacksProvider as StacksProvider, tokenId);
+      
+      if (!certResult.success || !certResult.result) {
+        return null;
+      }
+
+      // Get extra certificate data
+      const extraResult = await getCertificateExtraData(stacksProvider as StacksProvider, tokenId);
+      
+      // Parse the certificate data from the blockchain result
+      const certData = certResult.result as RawCertificateData;
+      const extraData = extraResult.success ? (extraResult.result as CertificateExtraData) : {};
+
+      const certificate: Certificate = {
+        tokenId,
+        name: certData.name || 'Unknown Certificate',
+        issuer: certData.issuer || 'Unknown Issuer',
+        recipient: certData.recipient || 'Unknown Recipient',
+        certificateId: certData['certificate-id'] || `cert-${tokenId}`,
+        courseName: certData['course-name'] || 'Unknown Course',
+        issueDate: certData['issue-date'] || new Date().toISOString(),
+        expiryDate: certData['expiry-date'] || undefined,
+        skills: certData.skills || [],
+        grade: certData.grade || undefined,
+        institution: extraData.institution || undefined,
+        instructor: undefined, // Not stored in current contract
+        imageUri: certData['image-uri'] || undefined,
+        description: certData.description || undefined,
+        isVerified: certData['metadata-frozen'] || false,
+        metadataFrozen: certData['metadata-frozen'] || false,
+        createdAt: Date.now()
+      };
+
+      return certificate;
+    } catch (error) {
+      console.error('Error checking certificate:', error);
+      throw error;
+    }
+  };
+
+  // Handle certificate ownership verification
+  const handleVerifyOwnership = async (tokenId: number): Promise<string | null> => {
+    if (!stacksProvider) {
+      throw new Error('Stacks connection not available');
+    }
+
+    try {
+      const ownerResult = await getCertificateOwner(stacksProvider as StacksProvider, tokenId);
+      
+      if (ownerResult.success && ownerResult.result) {
+        return ownerResult.result;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error verifying ownership:', error);
+      throw error;
     }
   };
 
@@ -228,6 +294,12 @@ const App: React.FC = () => {
                   onClick={() => setCurrentTab('gallery')}
                 >
                   🎓 My Certificates ({certificates.length})
+                </button>
+                <button
+                  className={`tab-btn ${currentTab === 'checker' ? 'active' : ''}`}
+                  onClick={() => setCurrentTab('checker')}
+                >
+                  🔍 Check Certificate
                 </button>
               </div>
             </div>
@@ -295,6 +367,16 @@ const App: React.FC = () => {
                     certificates={certificates}
                     onVerify={handleVerifyCertificate}
                     isLoading={isLoading}
+                  />
+                </div>
+              )}
+
+              {currentTab === 'checker' && (
+                <div className="checker-tab">
+                  <CertificateChecker
+                    onCheckCertificate={handleCheckCertificate}
+                    onVerifyOwnership={handleVerifyOwnership}
+                    isWalletConnected={isWalletConnected}
                   />
                 </div>
               )}

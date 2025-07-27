@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getWalletSession, setWalletSession, clearWalletSession, setupSessionCleanup } from '../utils/sessionUtils';
 import './WalletConnection.css';
 
 interface WalletConnectionProps {
@@ -13,6 +14,8 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
   walletAddress = ''
 }) => {
   const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
   const [error, setError] = useState<string>('');
   const [walletType, setWalletType] = useState<'leather' | 'xverse' | null>(null);
 
@@ -20,23 +23,33 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
   useEffect(() => {
     const checkStoredConnection = () => {
       try {
-        const storedConnection = localStorage.getItem('walletConnection');
+        // Use sessionStorage utility for session-based authentication
+        const storedConnection = getWalletSession();
         if (storedConnection) {
-          const { address, walletType: storedWalletType } = JSON.parse(storedConnection);
+          const { address, walletType: storedWalletType } = storedConnection;
           if (address && storedWalletType) {
             console.log('Found stored wallet connection:', storedWalletType, address);
-            setWalletType(storedWalletType);
+            setWalletType(storedWalletType as 'leather' | 'xverse');
             onConnected(address, true);
           }
         }
       } catch {
         console.log('No valid stored connection found');
-        localStorage.removeItem('walletConnection');
+        clearWalletSession();
       }
     };
 
     checkStoredConnection();
   }, [onConnected]);
+
+  // Setup session cleanup on component mount
+  useEffect(() => {
+    // Setup cleanup event listeners and get cleanup function
+    const cleanup = setupSessionCleanup();
+
+    // Return cleanup function for component unmount
+    return cleanup;
+  }, []);
 
   const connectLeatherWallet = async () => {
     try {
@@ -119,11 +132,8 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
         setWalletType('leather');
         onConnected(address, true);
         
-        // Store connection in localStorage
-        localStorage.setItem('walletConnection', JSON.stringify({
-          address,
-          walletType: 'leather'
-        }));
+        // Store connection using session utility
+        setWalletSession(address, 'leather');
         
         console.log('Successfully connected to Leather wallet');
       } else {
@@ -169,11 +179,8 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
         setWalletType('xverse');
         onConnected(address, true);
         
-        // Store connection in localStorage
-        localStorage.setItem('walletConnection', JSON.stringify({
-          address,
-          walletType: 'xverse'
-        }));
+        // Store connection using session utility
+        setWalletSession(address, 'xverse');
       } else {
         throw new Error('No addresses found in Xverse wallet');
       }
@@ -189,20 +196,82 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
     }
   };
 
-  const disconnectWallet = async () => {
+  const handleDisconnectClick = () => {
+    setShowDisconnectConfirm(true);
+  };
+
+  const confirmDisconnect = async () => {
+    setShowDisconnectConfirm(false);
+    await disconnectWallet();
+  };
+
+  const cancelDisconnect = () => {
+    setShowDisconnectConfirm(false);
+  };
+
+  const forceDisconnect = () => {
     try {
-      if (walletType === 'leather' && window.LeatherProvider) {
-        await window.LeatherProvider.request('signOut', {});
-      }
-      
+      console.log('Force disconnect initiated...');
       setWalletType(null);
       onConnected('', false);
+      clearWalletSession();
+      setError('');
+      setShowDisconnectConfirm(false); // Close any open confirmation dialog
+      console.log('Force disconnected successfully');
+    } catch (err) {
+      console.error('Force disconnect error:', err);
+    }
+  };
+
+  const disconnectWallet = async () => {
+    try {
+      setDisconnecting(true);
       setError('');
       
-      // Clear stored connection
-      localStorage.removeItem('walletConnection');
+      // Try to sign out from the appropriate wallet, but don't fail if it doesn't work
+      if (walletType === 'leather' && window.LeatherProvider) {
+        try {
+          await window.LeatherProvider.request('signOut', {});
+          console.log('Signed out from Leather wallet');
+        } catch (signOutError) {
+          console.warn('Could not sign out from Leather wallet:', signOutError);
+          // Continue with disconnection process even if signOut fails
+        }
+      } else if (walletType === 'xverse' && window.XverseProviders?.StacksProvider) {
+        try {
+          // Xverse doesn't have a standard signOut method, so we just clear the local state
+          console.log('Disconnecting from Xverse wallet (local state only)');
+        } catch (signOutError) {
+          console.warn('Could not sign out from Xverse wallet:', signOutError);
+          // Continue with disconnection process even if signOut fails
+        }
+      }
+      
+      // Always perform local disconnection regardless of wallet signOut result
+      setWalletType(null);
+      onConnected('', false);
+      
+      // Clear stored connection using session utility
+      clearWalletSession();
+      
+      console.log('Wallet disconnected successfully');
     } catch (err: unknown) {
       console.error('Error disconnecting wallet:', err);
+      
+      // Even if there's an error, try to clear local state
+      try {
+        setWalletType(null);
+        onConnected('', false);
+        clearWalletSession();
+        console.log('Forced wallet disconnection completed');
+      } catch (forceError) {
+        console.error('Failed to force disconnect:', forceError);
+      }
+      
+      const errorMessage = err instanceof Error ? err.message : 'Failed to disconnect wallet';
+      setError(`Disconnect failed: ${errorMessage}`);
+    } finally {
+      setDisconnecting(false);
     }
   };
 
@@ -269,14 +338,59 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({
           </div>
 
           <div className="connection-actions">
-            <button 
-              onClick={disconnectWallet}
-              className="disconnect-btn"
-            >
-              🔌 Disconnect
-            </button>
+            {showDisconnectConfirm ? (
+              <div className="disconnect-confirm">
+                <p>Are you sure you want to disconnect?</p>
+                <div className="confirm-buttons">
+                  <button 
+                    onClick={confirmDisconnect}
+                    className="confirm-btn"
+                    disabled={disconnecting}
+                  >
+                    {disconnecting ? '⏳ Disconnecting...' : '✅ Yes, Disconnect'}
+                  </button>
+                  <button 
+                    onClick={cancelDisconnect}
+                    className="cancel-btn"
+                    disabled={disconnecting}
+                  >
+                    ❌ Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button 
+                onClick={handleDisconnectClick}
+                className="disconnect-btn"
+                disabled={disconnecting}
+              >
+                🔌 Disconnect
+              </button>
+            )}
           </div>
         </div>
+
+        {error && (
+          <div className="error-message">
+            <span className="error-icon">⚠️</span>
+            <span>{error}</span>
+            <div className="error-actions">
+              <button 
+                onClick={forceDisconnect}
+                className="force-disconnect-btn"
+                title="Force disconnect without wallet API calls"
+              >
+                🔄 Force Disconnect
+              </button>
+              <button 
+                onClick={() => setError('')}
+                className="error-close"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="connection-status">
           <div className="status-indicator connected"></div>

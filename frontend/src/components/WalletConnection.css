@@ -478,3 +478,169 @@
     padding: 20px;
   }
 }
+
+/* Disconnect Confirmation Styles */
+.disconnect-confirm {
+  background: var(--bg-secondary);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+}
+
+.disconnect-confirm p {
+  color: var(--text-primary);
+  margin: 0 0 15px 0;
+  font-weight: 500;
+  font-size: 1.1em;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.confirm-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95em;
+  min-width: 140px;
+}
+
+.confirm-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.confirm-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancel-btn {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-color);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95em;
+  min-width: 140px;
+}
+
+.cancel-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--text-secondary);
+  transform: translateY(-2px);
+}
+
+.cancel-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 480px) {
+  .confirm-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .confirm-btn,
+  .cancel-btn {
+    min-width: 100%;
+  }
+}
+
+/* Error Message Styles */
+.error-message {
+  background: #fef2f2;
+  border: 2px solid #fecaca;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+}
+
+.error-icon {
+  font-size: 1.2em;
+  flex-shrink: 0;
+}
+
+.error-message span:not(.error-icon) {
+  color: #b91c1c;
+  flex: 1;
+  text-align: left;
+}
+
+.error-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.force-disconnect-btn {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.force-disconnect-btn:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+.error-close {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 1.2em;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.error-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Dark mode styles for error messages */
+[data-theme="dark"] .error-message {
+  background: #450a0a;
+  border-color: #7f1d1d;
+}
+
+[data-theme="dark"] .error-message span:not(.error-icon) {
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .error-close:hover {
+  background: #374151;
+  color: #d1d5db;
+}

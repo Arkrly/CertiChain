@@ -161,13 +161,57 @@ export const getCertificateDetails = async (
     const options: ContractCallOptions = {
       contractAddress: provider.contractAddress || '',
       contractName: provider.contractName || 'certchain',
-      functionName: 'get-certificate-details',
+      functionName: 'get-certificate',
       functionArgs: [tokenId]
     };
 
     return await callReadOnlyFunction(options);
   } catch (error) {
     console.error('Error getting certificate details:', error);
+    return { success: false, result: null };
+  }
+};
+
+// Get certificate owner
+export const getCertificateOwner = async (
+  provider: StacksProvider,
+  tokenId: number
+): Promise<{ success: boolean; result: string | null }> => {
+  try {
+    const options: ContractCallOptions = {
+      contractAddress: provider.contractAddress || '',
+      contractName: provider.contractName || 'certchain',
+      functionName: 'get-owner',
+      functionArgs: [tokenId]
+    };
+
+    const result = await callReadOnlyFunction(options);
+    return {
+      success: result.success,
+      result: result.success && typeof result.result === 'string' ? result.result : null
+    };
+  } catch (error) {
+    console.error('Error getting certificate owner:', error);
+    return { success: false, result: null };
+  }
+};
+
+// Get certificate extra data
+export const getCertificateExtraData = async (
+  provider: StacksProvider,
+  tokenId: number
+): Promise<{ success: boolean; result: unknown }> => {
+  try {
+    const options: ContractCallOptions = {
+      contractAddress: provider.contractAddress || '',
+      contractName: provider.contractName || 'certchain',
+      functionName: 'get-certificate-extra-data',
+      functionArgs: [tokenId]
+    };
+
+    return await callReadOnlyFunction(options);
+  } catch (error) {
+    console.error('Error getting certificate extra data:', error);
     return { success: false, result: null };
   }
 };

@@ -25,12 +25,12 @@ export const NETWORK_CONFIG: Record<string, NetworkConfig> = {
     contracts: {
       certchain: {
         // TODO: Replace with your actual deployed contract address
-        address: 'STWP05KMRQCK2S63Q78BA8HDZ84KYGGGXGYNME2A', // From deployment plan
+        address: 'STWP05KMRQCK2S63Q78BA8HDZ84KYGGGXGYNME2A.certchain', // From deployment plan
         name: 'certchain'
       },
       certchainUtil: {
         // TODO: Replace with your actual deployed contract address
-        address: 'STWP05KMRQCK2S63Q78BA8HDZ84KYGGGXGYNME2A', // From deployment plan
+        address: 'STWP05KMRQCK2S63Q78BA8HDZ84KYGGGXGYNME2A.certchain-util', // From deployment plan
         name: 'certchain-util'
       }
     }

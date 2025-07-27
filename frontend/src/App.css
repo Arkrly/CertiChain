@@ -184,7 +184,8 @@
 }
 
 .create-tab,
-.gallery-tab {
+.gallery-tab,
+.checker-tab {
   background: var(--bg-primary);
   border-radius: 16px;
   padding: 30px;
@@ -341,7 +342,8 @@
   }
   
   .create-tab,
-  .gallery-tab {
+  .gallery-tab,
+  .checker-tab {
     padding: 20px;
   }
   

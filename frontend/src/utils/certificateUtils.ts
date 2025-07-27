@@ -1,5 +1,7 @@
 // Certificate utility functions for handling JSON conversion and NFT operations
 
+import type { StacksProvider } from './stacksUtils';
+
 export interface CertificateData {
   name: string;
   issuer: string;
@@ -34,6 +36,7 @@ export interface Certificate {
   imageUri?: string;
   description?: string;
   isVerified: boolean;
+  metadataFrozen: boolean;
   createdAt: number;
 }
 
@@ -108,16 +111,10 @@ const isValidDate = (dateString: string): boolean => {
   return date instanceof Date && !isNaN(date.getTime());
 };
 
-// Define a proper interface for the Stacks provider
-export interface StacksProvider {
-  mintNFT?: (data: CertificateData) => Promise<MintResult>;
-  // Add other required properties/methods as needed
-}
-
 // Mock function to convert certificate to NFT (will be replaced with actual Stacks integration)
 export const convertCertificateToNFT = async (
-  stacksProvider: StacksProvider,
-  walletAddress: string,
+  _stacksProvider: StacksProvider,
+  _walletAddress: string,
   certificateData: CertificateData
 ): Promise<MintResult> => {
   try {
@@ -184,6 +181,7 @@ export const getCertificateNFTs = async (
         imageUri: 'https://example.com/cert1.png',
         description: 'Advanced course in Stacks blockchain development and smart contract programming.',
         isVerified: true,
+        metadataFrozen: true,
         createdAt: Date.now() - 86400000 // 1 day ago
       },
       {
@@ -199,6 +197,7 @@ export const getCertificateNFTs = async (
         institution: 'Crypto Institute',
         description: 'Comprehensive introduction to Web3 technologies and decentralized applications.',
         isVerified: false,
+        metadataFrozen: false,
         createdAt: Date.now() - 172800000 // 2 days ago
       }
     ];
