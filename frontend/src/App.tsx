@@ -272,35 +272,38 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <div className="app">
-        <DarkModeToggle />
-        
         <header className="app-header">
           <div className="header-content">
-            <div className="logo-section">
-              <h1>🏆 CertChain</h1>
-              <p>Convert certificates to NFTs on Stacks blockchain</p>
+            <div className="header-top">
+              <DarkModeToggle />
             </div>
-            
-            <div className="header-actions">
-              <div className="tab-navigation">
-                <button
-                  className={`tab-btn ${currentTab === 'create' ? 'active' : ''}`}
-                  onClick={() => setCurrentTab('create')}
-                >
-                  📝 Create Certificate
-                </button>
-                <button
-                  className={`tab-btn ${currentTab === 'gallery' ? 'active' : ''}`}
-                  onClick={() => setCurrentTab('gallery')}
-                >
-                  🎓 My Certificates ({certificates.length})
-                </button>
-                <button
-                  className={`tab-btn ${currentTab === 'checker' ? 'active' : ''}`}
-                  onClick={() => setCurrentTab('checker')}
-                >
-                  🔍 Check Certificate
-                </button>
+            <div className="header-main">
+              <div className="logo-section">
+                <h1>🏆 CertChain</h1>
+                <p>Convert certificates to NFTs on Stacks blockchain</p>
+              </div>
+              
+              <div className="header-actions">
+                <div className="tab-navigation">
+                  <button
+                    className={`tab-btn ${currentTab === 'create' ? 'active' : ''}`}
+                    onClick={() => setCurrentTab('create')}
+                  >
+                    📝 Create Certificate
+                  </button>
+                  <button
+                    className={`tab-btn ${currentTab === 'gallery' ? 'active' : ''}`}
+                    onClick={() => setCurrentTab('gallery')}
+                  >
+                    🎓 My Certificates ({certificates.length})
+                  </button>
+                  <button
+                    className={`tab-btn ${currentTab === 'checker' ? 'active' : ''}`}
+                    onClick={() => setCurrentTab('checker')}
+                  >
+                    🔍 Check Certificate
+                  </button>
+                </div>
               </div>
             </div>
           </div>

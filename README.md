@@ -12,7 +12,7 @@ CertiChain is a blockchain-based certificate verification platform that converts
 - **🔍 Certificate Verification**: On-chain verification of certificate authenticity
 
 ### User Experience
-- **🌙 Dark/Light Mode**: Toggle between dark and light themes with persistent storage
+- **🌙 Dark/Light Mode**: Toggle between dark and light themes with persistent storage, now elegantly integrated into the header for a seamless experience
 - **📱 Responsive Design**: Fully responsive UI that works on all device sizes
 - **💾 Persistent State**: Wallet connections and theme preferences saved locally
 - **⚡ Real-time Updates**: Live updates when certificates are minted or verified
@@ -30,6 +30,7 @@ CertiChain is a blockchain-based certificate verification platform that converts
 - **Vite** for fast development and optimized builds
 - **Stacks.js** libraries for blockchain integration
 - **CSS Variables** for flexible theming system
+- **Integrated Header Toggle**: Dark mode toggle is part of the header layout for a modern, professional look
 
 ### Smart Contracts (Clarity)
 - **`certchain.clar`**: Main NFT contract for certificate minting and management
@@ -270,3 +271,7 @@ If you encounter any issues or have questions:
 ---
 
 **Built with ❤️ on Stacks Blockchain**
+
+## 🖼️ Screenshots
+
+> _Add screenshots of the CertChain UI here to showcase the integrated header and dark mode toggle._
