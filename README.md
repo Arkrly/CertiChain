@@ -271,7 +271,10 @@ If you encounter any issues or have questions:
 ---
 
 **Built with ❤️ on Stacks Blockchain**
+<img width="1920" height="1020" alt="Screenshot 2025-07-29 172918" src="https://github.com/user-attachments/assets/32274c60-a1fa-4633-a0fb-952792b0738e" />
+<img width="1920" height="1020" alt="Screenshot 2025-07-29 172912" src="https://github.com/user-attachments/assets/3d7168b1-2d6e-4c49-ad02-4583f9664547" />\
+
 
 ## 🖼️ Screenshots
 
-> _Add screenshots of the CertChain UI here to showcase the integrated header and dark mode toggle._
+
